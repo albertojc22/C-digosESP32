@@ -1,0 +1,86 @@
+El 28BYJ-48 es un motor paso a paso unipolar de 5V muy popular para proyectos de aficionados, con estas características:
+
+- Tipo: Motor paso a paso unipolar (4 bobinas)
+
+- Voltaje: 5V DC
+
+- Pasos por revolución: 2048 pasos completos (64 pasos por vuelta × 32:1 reducción)
+
+- Ángulo por paso: 5.625° (0.0879° por paso completo con reducción)
+
+- Par: Aprox. 34.3 mN·m
+
+- Control: Requiere driver ULN2003
+
+- Aplicaciones: Proyectos de robótica, automatización, posicionamiento preciso
+
+
+#include <Stepper.h>
+
+// Definición de pasos por revolución (2048 para 28BYJ-48)
+const int stepsPerRevolution = 2048;
+
+// Conexiones a los pines del ULN2003
+#define IN1 12
+#define IN2 14
+#define IN3 27
+#define IN4 26
+
+// Inicializar la librería Stepper
+Stepper myStepper(stepsPerRevolution, IN1, IN3, IN2, IN4);
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial) delay(10);
+  
+  // Establecer velocidad inicial (ajustar según necesidades)
+  myStepper.setSpeed(10); // 10 RPM
+  
+  Serial.println("\nControl de motor 28BYJ-48 con ESP32");
+  Serial.println("Comandos disponibles:");
+  Serial.println("+N : Gira N pasos en sentido horario");
+  Serial.println("-N : Gira N pasos en sentido antihorario");
+  Serial.println("R  : Gira una revolución completa");
+  Serial.println("S  : Detiene el motor");
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+    String input = Serial.readStringUntil('\n');
+    input.trim();
+    
+    if (input.length() > 0) {
+      if (input.startsWith("+")) {
+        int steps = input.substring(1).toInt();
+        Serial.print("Girando ");
+        Serial.print(steps);
+        Serial.println(" pasos en sentido horario");
+        myStepper.step(steps);
+      } 
+      else if (input.startsWith("-")) {
+        int steps = input.substring(1).toInt();
+        Serial.print("Girando ");
+        Serial.print(steps);
+        Serial.println(" pasos en sentido antihorario");
+        myStepper.step(-steps);
+      }
+      else if (input.equalsIgnoreCase("R")) {
+        Serial.println("Girando una revolución completa (2048 pasos)");
+        myStepper.step(stepsPerRevolution);
+        delay(500);
+        myStepper.step(-stepsPerRevolution);
+      }
+      else if (input.equalsIgnoreCase("S")) {
+        Serial.println("Motor detenido");
+        // Apagar todas las bobinas
+        digitalWrite(IN1, LOW);
+        digitalWrite(IN2, LOW);
+        digitalWrite(IN3, LOW);
+        digitalWrite(IN4, LOW);
+      }
+      else {
+        Serial.println("Comando no reconocido");
+      }
+    }
+  }
+}
