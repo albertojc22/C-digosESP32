@@ -1,0 +1,52 @@
+#include <ESP32Servo.h>
+
+Servo myservo;  // Crea un objeto servo
+
+const int servoPin = 13;  // Pin GPIO al que conectamos el servo
+int targetPos = 0;        // Variable para la posición objetivo
+
+void setup() {
+  Serial.begin(115200);
+  
+  // Configuración del servo
+  ESP32PWM::allocateTimer(0);
+  myservo.setPeriodHertz(50);    // Frecuencia estándar para servos SG90
+  myservo.attach(servoPin, 500, 2400); // Adjunta el servo al pin
+  
+  // Mueve el servo a la posición inicial (0°)
+  myservo.write(0);
+  delay(500);
+  
+  Serial.println("\nControl de Servo SG90 con ESP32");
+  Serial.println("Ingresa los grados (0-180) y presiona Enter:");
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+    String input = Serial.readStringUntil('\n');
+    input.trim();
+    
+    // Verifica si el input es un número válido
+    if (input.length() > 0) {
+      targetPos = input.toInt();
+      
+      // Limita el rango a 0-180 grados
+      if (targetPos < 0) targetPos = 0;
+      if (targetPos > 180) targetPos = 180;
+      
+      Serial.print("Moviendo a: ");
+      Serial.print(targetPos);
+      Serial.println("°");
+      
+      // Mueve el servo a la posición deseada
+      myservo.write(targetPos);
+      delay(500); // Tiempo para que llegue a la posición
+      
+      // Espera 2 segundos
+      delay(2000);
+      
+      
+      Serial.println("\nIngresa nuevos grados (0-180):");
+    }
+  }
+}
